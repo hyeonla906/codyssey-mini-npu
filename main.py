@@ -10,7 +10,7 @@ REPEAT = 10
 SIZES = (3, 5, 13, 25)
 
 
-# 같은 위치의 수를 곱하고 그 결과를 전부 더한다.
+# MAC 점수 계산
 def mac(pattern, filter_data):
     score = 0.0
     for row in range(len(pattern)):
@@ -19,7 +19,7 @@ def mac(pattern, filter_data):
     return score
 
 
-# 한 줄에 숫자 3개씩 입력받고 잘못 입력한 줄은 다시 받는다.
+# 3×3 배열 입력
 def input_matrix(name):
     matrix = []
     print(f"\n{name} 입력 (3x3, 숫자 사이 공백)")
@@ -47,7 +47,7 @@ def input_matrix(name):
     return matrix
 
 
-# 점수가 거의 같으면 판정 불가이다.
+# 점수 비교 및 판정
 def decide(score_a, score_b, label_a="A", label_b="B"):
     if not math.isfinite(score_a) or not math.isfinite(score_b):
         return "UNDECIDED"
@@ -58,7 +58,7 @@ def decide(score_a, score_b, label_a="A", label_b="B"):
     return label_b
 
 
-# 파일 읽기나 화면 출력 시간은 재지 않고 MAC 함수만 10회 이상 측정한다.
+# MAC 평균 시간 측정
 def measure_mac(pattern, filter_data, repeat=REPEAT):
     start = time.perf_counter()
     for _ in range(repeat):
@@ -67,7 +67,7 @@ def measure_mac(pattern, filter_data, repeat=REPEAT):
     return (end - start) * 1000 / repeat
 
 
-# data.json은 main.py와 같은 폴더에서 읽는다.
+# JSON 파일 읽기
 def load_json_data():
     path = Path(__file__).resolve().parent / "data.json"
     try:
@@ -88,7 +88,7 @@ def load_json_data():
     return data
 
 
-# 'cross', '+'를 Cross로, 'x'를 X로 통일한다.
+# 라벨 정규화
 def normalize_label(label):
     if not isinstance(label, str):
         return None
@@ -100,7 +100,7 @@ def normalize_label(label):
     return None
 
 
-# n×n 배열인지, 모든 칸이 유한한 숫자인지 검사한다.
+# 배열 데이터 검사
 def validate_matrix(matrix, size):
     if not isinstance(matrix, list):
         return "2차원 리스트 형식이 아닙니다"
@@ -123,7 +123,7 @@ def validate_matrix(matrix, size):
     return None
 
 
-# size_N_idx를 해석한다. 잘못된 이름은 None과 오류 이유를 돌려준다.
+# 패턴 키 검사
 def parse_case_key(key):
     parts = key.split("_")
     if len(parts) != 3 or parts[0] != "size":
@@ -138,7 +138,7 @@ def parse_case_key(key):
     return size, None
 
 
-# 필터 이름을 표준화하고 두 배열을 검증한다.
+# 필터 검증 및 정규화
 def get_filters(filters, size):
     source = filters.get(f"size_{size}")
     if not isinstance(source, dict):
@@ -160,7 +160,7 @@ def get_filters(filters, size):
     return normalized, None
 
 
-# 패턴 한 개를 검사하고 판정한다. 실패해도 다른 패턴은 계속 진행한다.
+# 패턴별 PASS/FAIL 분석
 def analyze_case(key, case, filters):
     size, error = parse_case_key(key)
     if error:
@@ -196,7 +196,6 @@ def analyze_case(key, case, filters):
             "result": result, "expected": expected}
 
 
-# 예제 3×3은 성능 비교용 고정 배열이다. 자동 패턴 생성기는 만들지 않는다.
 BENCHMARK_3 = [
     [0, 1, 0],
     [1, 1, 1],
@@ -204,7 +203,7 @@ BENCHMARK_3 = [
 ]
 
 
-# 표의 N²는 '필터 하나에 대한 MAC 계산 한 번'의 위치별 곱셈 횟수이다.
+# 크기별 성능표 출력
 def show_performance(filters, patterns):
     print("\n=== 성능 분석 (크기별 MAC 평균/10회) ===")
     print(f"{'크기':<10} {'평균 시간(ms)':>16} {'연산 횟수(N²)':>16}")
@@ -218,7 +217,6 @@ def show_performance(filters, patterns):
             if error:
                 print(f"{size}x{size:<7} {'N/A':>16} {size * size:>16} ({error})")
                 continue
-            # 해당 크기에서 올바른 패턴 하나를 우선 사용한다.
             pattern = None
             for key, case in patterns.items():
                 case_size, key_error = parse_case_key(key)
@@ -227,7 +225,6 @@ def show_performance(filters, patterns):
                     if validate_matrix(candidate, size) is None:
                         pattern = candidate
                         break
-            # 패턴이 전부 잘못되어 있다면 정상 Cross 필터를 입력 배열로 쓴다.
             if pattern is None:
                 pattern = normalized["Cross"]
             filter_data = normalized["Cross"]
@@ -235,7 +232,7 @@ def show_performance(filters, patterns):
         print(f"{size}x{size:<7} {average:>16.6f} {size * size:>16}")
 
 
-# 모드 1: 직접 3×3 입력하고 A/B 판정한다.
+# 모드 1 실행
 def mode1():
     print("\n=== 사용자 입력 (3x3) ===")
     filter_a = input_matrix("필터 A")
@@ -263,7 +260,7 @@ def mode1():
     print("연산 횟수(N², 필터당):", len(pattern) ** 2)
 
 
-# 모드 2: JSON 전체 분석, PASS/FAIL, 성능표, 요약 출력.
+# 모드 2 실행
 def mode2():
     print("\n=== data.json 분석 ===")
     data = load_json_data()
@@ -310,7 +307,7 @@ def mode2():
         print("실패 케이스: 없음")
 
 
-# 프로그램 시작 메뉴.
+# 메뉴 실행
 def main():
     while True:
         print("\n=== Mini NPU Simulator ===")
